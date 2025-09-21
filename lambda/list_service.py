@@ -18,31 +18,25 @@ def lambda_handler(event, context):
     method = http.get("method", event.get("httpMethod"))
     raw_path = event.get("rawPath", event.get("path", ""))
 
-    if method == "POST" and raw_path.endswith("/head"):
-        return get_head(event)
-    if method == "POST" and raw_path.endswith("/tail"):
-        return get_tail(event)
+    if method == "POST":
+        return _handle_request(event, raw_path)
 
     return _response(404, {"ERROR": "Route not found"})
 
-def get_head(event):
+def _handle_request(event, raw_path):
     try:
         body = json.loads(event.get("body") or "{}")
         data = body.get("data")
         if not data or not isinstance(data, list):
-            return _response(400, {"ERROR": "Data must be a non-empty list"})
-        return _response(200, {"head": data[0]})
-    except Exception as e:
-        logger.exception("Error in get_head")
-        return _response(500, {"ERROR": str(e)})
+            return _response(400, {"ERROR": "Data must be a non-empty list of strings"})
 
-def get_tail(event):
-    try:
-        body = json.loads(event.get("body") or "{}")
-        data = body.get("data")
-        if not data or not isinstance(data, list):
-            return _response(400, {"ERROR": "Data must be a non-empty list"})
-        return _response(200, {"tail": data[1:]})
+        if raw_path.endswith("/head"):
+            return _response(200, {"head": data[0]})
+        if raw_path.endswith("/tail"):
+            return _response(200, {"tail": data[1:]})
+
+        return _response(404, {"ERROR": "Route not found"})
+
     except Exception as e:
-        logger.exception("Error in get_tail")
+        logger.exception("Error in _handle_request")
         return _response(500, {"ERROR": str(e)})
