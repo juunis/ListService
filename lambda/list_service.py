@@ -11,6 +11,18 @@ def _response(status, body):
         "body": json.dumps(body)
     }
 
+def _validate_data(data):
+    if not data or not isinstance(data, list):
+        return False, "Data must be a non-empty list of strings"
+
+    for string_value in data:
+        if not isinstance(string_value, str):
+            return False, "All items in list must be strings"
+        if string_value.strip() == "":
+            return False, "List cannot contain empty strings"
+
+    return True, None
+
 def lambda_handler(event, context):
     logger.info("Event: %s", json.dumps(event))
 
@@ -27,8 +39,10 @@ def _handle_request(event, raw_path):
     try:
         body = json.loads(event.get("body") or "{}")
         data = body.get("data")
-        if not data or not isinstance(data, list):
-            return _response(400, {"ERROR": "Data must be a non-empty list of strings"})
+        
+        is_valid, error = _validate_data(data)
+        if not is_valid:
+            return _response(400, {"ERROR": error})
 
         if raw_path.endswith("/head"):
             return _response(200, {"head": data[0]})
