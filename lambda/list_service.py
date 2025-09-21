@@ -19,7 +19,7 @@ def _validate_data(data):
         if not isinstance(string_value, str):
             return False, "All items in list must be strings"
         if string_value.strip() == "":
-            return False, "List cannot contain empty strings"
+            return False, "List cannot contain empty or whitespace strings"
 
     return True, None
 
@@ -46,11 +46,10 @@ def _handle_request(event, raw_path):
 def lambda_handler(event, context):
     logger.info("Event: %s", json.dumps(event))
 
-    http = event.get("requestContext", {}).get("http", {})
-    method = http.get("method", event.get("httpMethod"))
+    method = event.get("requestContext", {}).get("http", {}).get("method", event.get("httpMethod"))
     raw_path = event.get("rawPath", event.get("path", ""))
 
-    if method == "POST":
-        return _handle_request(event, raw_path)
+    if method != "POST":
+        return _response(405, {"ERROR": "Invalid method. Only POST is supported."})
 
-    return _response(404, {"ERROR": "Route not found"})
+    return _handle_request(event, raw_path)
