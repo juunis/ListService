@@ -1,8 +1,8 @@
 terraform {
     required_providers {
         aws = {
-        source  = "hashicorp/aws"
-        version = "~> 5.0"
+            source  = "hashicorp/aws"
+            version = "~> 5.0"
         }
     }
 }
@@ -16,19 +16,39 @@ resource "aws_iam_role" "listservice_lambda_role" {
     name = "listservice-lambda-role"
 
     assume_role_policy = jsonencode({
-        Version = "2012-10-17"
+        Version   = "2012-10-17"
         Statement = [{
-        Action    = "sts:AssumeRole"
-        Effect    = "Allow"
-        Principal = { Service = "lambda.amazonaws.com" }
+            Action    = "sts:AssumeRole"
+            Effect    = "Allow"
+            Principal = { Service = "lambda.amazonaws.com" }
         }]
     })
 }
 
-# Attach Policy to Allow CloudWatch Logging
-resource "aws_iam_role_policy_attachment" "listservice_lambda_logs_policy_attachment" {
-    role = aws_iam_role.listservice_lambda_role.name
-    policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+# Lambda Logging Policy
+resource "aws_iam_role_policy" "listservice_lambda_logs_policy" {
+    name = "listservice-lambda-logs"
+    role = aws_iam_role.listservice_lambda_role.id
+
+    policy = jsonencode({
+        Version = "2012-10-17"
+        Statement = [
+            {
+                Effect = "Allow"
+                Action = [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                ]
+                Resource = "arn:aws:logs:*:*:log-group:/aws/lambda/ListService:*"
+            }
+        ]
+    })
+}
+
+# Lambda Log Group
+resource "aws_cloudwatch_log_group" "listservice_log_group" {
+    name = "/aws/lambda/ListService"
 }
 
 # Zip Lambda Code
@@ -45,6 +65,10 @@ resource "aws_lambda_function" "list_service_lambda" {
     role          = aws_iam_role.listservice_lambda_role.arn
     handler       = "list_service.lambda_handler"
     runtime       = "python3.13"
+
+    depends_on = [
+        aws_cloudwatch_log_group.listservice_log_group
+    ]
 }
 
 # API Gateway HTTP API
@@ -55,9 +79,9 @@ resource "aws_apigatewayv2_api" "list_service_http_api" {
 
 # Lambda Integration
 resource "aws_apigatewayv2_integration" "lambda_integration" {
-    api_id           = aws_apigatewayv2_api.list_service_http_api.id
-    integration_type = "AWS_PROXY"
-    integration_uri  = aws_lambda_function.list_service_lambda.invoke_arn
+    api_id                 = aws_apigatewayv2_api.list_service_http_api.id
+    integration_type       = "AWS_PROXY"
+    integration_uri        = aws_lambda_function.list_service_lambda.invoke_arn
     payload_format_version = "2.0"
 }
 
