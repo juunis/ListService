@@ -23,18 +23,6 @@ def _validate_data(data):
 
     return True, None
 
-def lambda_handler(event, context):
-    logger.info("Event: %s", json.dumps(event))
-
-    http = event.get("requestContext", {}).get("http", {})
-    method = http.get("method", event.get("httpMethod"))
-    raw_path = event.get("rawPath", event.get("path", ""))
-
-    if method == "POST":
-        return _handle_request(event, raw_path)
-
-    return _response(404, {"ERROR": "Route not found"})
-
 def _handle_request(event, raw_path):
     try:
         body = json.loads(event.get("body") or "{}")
@@ -54,3 +42,15 @@ def _handle_request(event, raw_path):
     except Exception as e:
         logger.exception("Error in _handle_request")
         return _response(500, {"ERROR": str(e)})
+
+def lambda_handler(event, context):
+    logger.info("Event: %s", json.dumps(event))
+
+    http = event.get("requestContext", {}).get("http", {})
+    method = http.get("method", event.get("httpMethod"))
+    raw_path = event.get("rawPath", event.get("path", ""))
+
+    if method == "POST":
+        return _handle_request(event, raw_path)
+
+    return _response(404, {"ERROR": "Route not found"})
