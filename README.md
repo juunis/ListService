@@ -47,7 +47,7 @@ https://www.python.org/downloads/
 
 # Setup
 
-### Clone repository:
+### Clone Repository:
 ```git clone https://github.com/juunis/ListService.git```
 
 # Local Testing
@@ -79,7 +79,7 @@ AWS deployment region can be set by changing the **aws_region** variable in ``te
 
 # API Usage
 
-### Using with HTTP/API client (Insomnia, Postman etc)
+### Using with HTTP/API Client (Insomnia, Postman etc)
 
 The API Gateway endpoint can be retrieved from the ```api_endpoint``` Terraform output.
 
@@ -114,7 +114,7 @@ The API Gateway endpoint can be retrieved from the ```api_endpoint``` Terraform 
 }
 ```
 
-## Example requests using curl
+## Example Requests Using Curl
 
 Replace ``<api_endpoint>`` with the API Gateway endpoint from the ```api_endpoint``` Terraform output.
 
@@ -146,8 +146,20 @@ curl -X POST <api_endpoint>/tail \
 | Unsupported HTTP method | 405 | ```{"ERROR": Invalid method. Only POST is supported.}``` |
 | Unknown route | 404 | ```{"ERROR": Route not found}``` |
 
-# Resource cleanup
+# Resource Cleanup
 
 Remove all resources created by Terraform when finished testing:
 
 ```terraform destroy```
+
+# Ideas for Further Development
+
+- Testing improvements: Improve the testing with integration tests using pytest and local API Gateway/Lambda mocks.
+
+- Error monitoring: Integrate with CloudWatch Alarms for monitoring.
+
+- CI/CD pipeline: Automate deployments with GitHub Actions.
+
+- Authentication: Restrict API access with JWT authorizer (such as AWS Cognito).
+
+- Custom domain name: Map the API Gateway endpoint to a custom domain with AWS Route 53 and SSL certificates.
